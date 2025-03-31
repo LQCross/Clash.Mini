@@ -113,7 +113,7 @@ jobs:
       # 上传64位应用到Actions Artifacts
       - name: Upload x64 Application to Artifacts 📤
         if: ${{ steps.prepare-pre-release.outcome == 'success' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.BUILD_X64_FILENAME }}
           path: ${{ env.PUBLISH_PATH }}/*_x64.exe
@@ -123,7 +123,7 @@ jobs:
       # 上传32位应用到Actions Artifacts
       - name: Upload x86 Application to Artifacts 📤
         if: ${{ steps.prepare-pre-release.outcome == 'success' && success() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.BUILD_X86_FILENAME }}
           path: ${{ env.PUBLISH_PATH }}/*_x86.exe
