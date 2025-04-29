@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - release
-      - pre-release
   pull_request:
     branches:
       - release
-      - pre-release
 #    tags:
 #      - "v*.*.*"
 
@@ -103,33 +101,6 @@ jobs:
           $env:GOARCH="386"
           go build -a -v -x -ldflags "-H=windowsgui -s -w" -o ${env:BUILD_PATH}/Clash.Mini_x86.exe
 
-      # 准备发布PreRelease文件
-      - id: prepare-pre-release
-        name: Prepare to Publish PreRelease 🕹
-        if: ${{ env.GIT_BRANCH != 'release' && success() }}
-        shell: pwsh
-        run: pwsh -f ./.github/scripts/steps/build/4_prepare_pre.ps1
-
-      # 上传64位应用到Actions Artifacts
-      - name: Upload x64 Application to Artifacts 📤
-        if: ${{ steps.prepare-pre-release.outcome == 'success' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.BUILD_X64_FILENAME }}
-          path: ${{ env.PUBLISH_PATH }}/*_x64.exe
-          if-no-files-found: error
-          retention-days: ${{ env.artifact-retention-days }}
-
-      # 上传32位应用到Actions Artifacts
-      - name: Upload x86 Application to Artifacts 📤
-        if: ${{ steps.prepare-pre-release.outcome == 'success' && success() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.BUILD_X86_FILENAME }}
-          path: ${{ env.PUBLISH_PATH }}/*_x86.exe
-          if-no-files-found: error
-          retention-days: ${{ env.artifact-retention-days }}
-
       # 准备发布Release文件
       - name: Prepare to Publish Release 🕹
         if: ${{ env.GIT_BRANCH == 'release' && success() }}
@@ -193,21 +164,6 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      # 推送发行公告到TG
-      - id: push-broadcast-to-tg
-        name: Push Broadcast to TG 📰
-        if: ${{ success() && !contains(github.event.head_commit.message, '[Skip Push]') }}
-        shell: bash
-        run: bash ./.github/scripts/steps/notification/1_push_broadcast_tg.sh
-
-      # 推送文件到TG
-      - name: Push Files to TG 📰
-        if: ${{ success() && contains(github.event.head_commit.message, '[Push Upload]') }}
-        shell: bash
-        run: bash ./.github/scripts/steps/notification/2_push_files_tg.sh
-        env:
-          PUSH_MSG_ID: ${{ steps.push-broadcast-to-tg.outputs.push-msg-id }}
-
 #      # 缓存Build文件
 #      - name: Cache node modules
 #        uses: actions/cache@v2
@@ -233,12 +189,3 @@ jobs:
 #          tag: ${{ jobs.build-release-windows.env.GIT_TAG }}
 #          path: ./release
 #          token: ${{ secrets.ACTION_ACCESS_TOKEN }}
-#
-#      - name: Send to TG 💡
-#        uses: appleboy/telegram-action@master
-#        with:
-#          to: JyCyun
-#          token: ${{ secrets.TG_BOT_TOKEN }}
-#          message: "test release \nSee full in https://github.com/JyCyunMe/Clash.Mini/releases/tag/${{ env.GIT_TAG }}"
-#          disable_web_page_preview: true
-#          document: ./release/Clash.Mini*
